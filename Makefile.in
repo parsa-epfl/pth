@@ -423,7 +423,7 @@ TAGS:
 ##  (AUTOMATICALLY UPDATED - DO NOT EDIT)
 ##
 
-$(LOBJS): Makefile
+$(LOBJS): pth_p.h Makefile
 
 # DO NOT REMOVE
 pth_attr.lo: pth_attr.c pth_p.h pth_vers.c pth.h pth_acdef.h pth_acmac.h
