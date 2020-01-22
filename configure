@@ -3046,7 +3046,7 @@ fi
 msg="enabled"
 
 cat >>confdefs.h <<\_ACEOF
-define PTH_DEBUG 1
+#define PTH_DEBUG 1
 _ACEOF
 
 else
