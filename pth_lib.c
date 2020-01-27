@@ -128,8 +128,14 @@ int pth_init(void)
      * function to find the scheduler.
      */
     pth_current = pth_sched;
-    pth_mctx_switch(&pth_main->mctx, &pth_sched->mctx);
 
+    /* Msutherl: annotations for Clang api. Nothing happens under the hood if
+     * support not detected by autoconf. 
+     * */
+    wrapper_start_fiber_switch(pth_sched->stack,pth_sched->stacksize);
+    pth_mctx_switch(&pth_main->mctx, &pth_sched->mctx);
+    wrapper_finish_fiber_switch();
+    pth_debug5("Finished switch back to pth_init stack 0x%p, size %u, FROM stack 0x%p, size %u",pth_main->stack,pth_main->stacksize,from_stack,from_stacksize);
     /* came back, so let's go home... */
     pth_debug1("pth_init: leave");
     return TRUE;
@@ -211,6 +217,11 @@ long pth_ctrl(unsigned long query, ...)
 static void pth_spawn_trampoline(void)
 {
     void *data;
+
+    /* Msutherl: Call the finish fiber switch here before jumping into the
+     * thread's execution function. Prevents all user code from needing to call
+     * an external sanitizer API. */
+    wrapper_finish_fiber_switch();
 
     /* just jump into the start routine */
     data = (*pth_current->start_func)(pth_current->start_arg);
@@ -449,7 +460,14 @@ void pth_exit(void *value)
         pth_current->join_arg = value;
         pth_current->state = PTH_STATE_DEAD;
         pth_debug2("pth_exit: switching from thread \"%s\" to scheduler", pth_current->name);
+
+        /* Msutherl: annotations for Clang api. Nothing happens under the hood if
+         * support not detected by autoconf. 
+         */
+        wrapper_start_fiber_switch(pth_sched->stack,pth_sched->stacksize);
         pth_mctx_switch(&pth_current->mctx, &pth_sched->mctx);
+        wrapper_finish_fiber_switch();
+        pth_debug5("Finished switch back to pth_sched stack 0x%p, size %u, FROM stack 0x%p, size %u",pth_sched->stack,pth_sched->stacksize,from_stack,from_stacksize);
     }
     else {
         /*
@@ -522,9 +540,15 @@ int pth_yield(pth_t to)
                    "in favour of thread \"%s\"", to->name);
     else
         pth_debug1("pth_yield: give up control to scheduler");
-    pth_mctx_switch(&pth_current->mctx, &pth_sched->mctx);
-    pth_debug1("pth_yield: got back control from scheduler");
 
+    /* Msutherl: annotations for Clang api. Nothing happens under the hood if
+     * support not detected by autoconf. 
+     * */
+    wrapper_start_fiber_switch(pth_sched->stack,pth_sched->stacksize);
+    pth_mctx_switch(&pth_current->mctx, &pth_sched->mctx);
+    wrapper_finish_fiber_switch();
+    pth_debug5("Finished switch back to pth_sched stack 0x%p, size %u, FROM stack 0x%p, size %u",pth_sched->stack,pth_sched->stacksize,from_stack,from_stacksize);
+    pth_debug1("pth_yield: got back control from scheduler");
     pth_debug2("pth_yield: leave to thread \"%s\"", pth_current->name);
     return TRUE;
 }

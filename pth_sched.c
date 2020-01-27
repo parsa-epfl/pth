@@ -163,6 +163,8 @@ intern void *pth_scheduler(void *dummy)
     int sig;
     pth_t t;
 
+    pth_debug5("Finished switch to pth_scheduler first time 0x%p, size %u, FROM stack 0x%p, size %u",pth_sched->stack,pth_sched->stacksize,from_stack,from_stacksize);
+
     /*
      * bootstrapping
      */
@@ -248,7 +250,15 @@ intern void *pth_scheduler(void *dummy)
 
         /* ** ENTERING THREAD ** - by switching the machine context */
         pth_current->dispatches++;
+
+        /* Msutherl: annotations for Clang api. Nothing happens under the hood if
+         * support not detected by autoconf. 
+         */
+        wrapper_start_fiber_switch(pth_current->stack,pth_current->stacksize);
         pth_mctx_switch(&pth_sched->mctx, &pth_current->mctx);
+        wrapper_finish_fiber_switch();
+        pth_debug5("Finished switch back to pth_sched stack 0x%p, size %u, FROM stack 0x%p, size %u",
+                pth_sched->stack,pth_sched->stacksize,from_stack,from_stacksize);
 
         /* update scheduler times */
         pth_time_set(&snapshot, PTH_TIME_NOW);

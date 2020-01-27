@@ -60,6 +60,17 @@ struct pth_mctx_st {
     int error;
 };
 
+/* Msutherl: Parameters to swap out when compiled using address sanitizer 
+ * These params are only used when --enable-asan requested from autoconf. */
+void *fake_stack_save;
+const void *from_stack;
+size_t from_stacksize;
+
+/* Functions that wrap __sanitizer_start_fiber_switch as well as __sanitizer_end_fiber_switch,
+ * as well as debugging prints if compiled in
+ */
+void wrapper_start_fiber_switch(const void *new_stack, const size_t new_stacksize);
+void wrapper_finish_fiber_switch(void);
 /*
 ** ____ MACHINE STATE SWITCHING ______________________________________
 */
@@ -119,7 +130,7 @@ struct pth_mctx_st {
  * switch from one machine context to another
  */
 #define SWITCH_DEBUG_LINE \
-        "==== THREAD CONTEXT SWITCH ==========================================="
+        "================== THREAD CONTEXT SWITCH ==========================================="
 #ifdef PTH_DEBUG
 #define  _pth_mctx_switch_debug pth_debug(NULL, 0, 1, SWITCH_DEBUG_LINE);
 #else
@@ -140,6 +151,40 @@ struct pth_mctx_st {
 #endif
 
 #endif /* cpp */
+
+/* Msutherl: Include sanitizer API */
+#if defined(__clang__)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#include <sanitizer/common_interface_defs.h>
+#endif // endif support for Clang ASAN API
+#endif // endif has_feature
+#endif
+
+/* Msutherl: functions to wrap sanitizer API. They only do anything 
+ * when called by other PTH functions if compiled under ASAN */
+intern void wrapper_start_fiber_switch(const void *new_stack, const size_t new_stacksize) {
+#if defined(__clang__)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    pth_debug3("WRAPPER: Switching fiber to new stack 0x%p, size %u",new_stack,new_stacksize);
+    __sanitizer_start_switch_fiber(NULL,new_stack,new_stacksize);
+#endif // endif support for Clang ASAN API
+#endif // endif has_feature
+#endif
+}
+
+intern void wrapper_finish_fiber_switch(void) {
+#if defined(__clang__)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    pth_debug3("WRAPPER: Finished fiber switch FROM stack 0x%p, size %u",from_stack,from_stacksize);
+    __sanitizer_finish_switch_fiber(NULL,&from_stack,&from_stacksize);
+#endif // endif support for Clang ASAN API
+#endif // endif has_feature
+#endif
+}
+
 
 /*
 ** ____ MACHINE STATE INITIALIZATION ________________________________
@@ -558,4 +603,3 @@ pth_mctx_set(pth_mctx_t *mctx, void (*func)(void),
 #else
 #error "unknown mctx method"
 #endif
-
