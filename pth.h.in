@@ -445,6 +445,7 @@ extern int            pth_abort(pth_t);
 extern int            pth_raise(pth_t, int);
 extern int            pth_join(pth_t, void **);
 extern void           pth_exit(void *);
+extern void           pth_swap_cur_thread_sstate(pth_t, const void *, const int);
 
     /* utility functions */
 extern int            pth_fdmode(int, int);

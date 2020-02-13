@@ -71,6 +71,7 @@ size_t from_stacksize;
  */
 void wrapper_start_fiber_switch(const void *new_stack, const size_t new_stacksize);
 void wrapper_finish_fiber_switch(void);
+
 /*
 ** ____ MACHINE STATE SWITCHING ______________________________________
 */
@@ -180,6 +181,22 @@ intern void wrapper_finish_fiber_switch(void) {
 #if __has_feature(address_sanitizer)
     pth_debug3("WRAPPER: Finished fiber switch FROM stack 0x%p, size %u",from_stack,from_stacksize);
     __sanitizer_finish_switch_fiber(fake_stack_save,&from_stack,&from_stacksize);
+#endif // endif support for Clang ASAN API
+#endif // endif has_feature
+#endif
+}
+
+/* Function called from QEMU to swap the current pth thread's stack pointer and size....
+ * Useful only with QEMU coroutines */
+void pth_swap_cur_thread_sstate(pth_t thread, const void *newsp, const int newsize) {
+#if defined(__clang__)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    pth_debug6("libpth!: Setting thread name %s with old stack %p, old size %d,"
+               " to new stack %p, size %d\n",thread->name,thread->stack,thread->stacksize,
+               newsp,newsize);
+    thread->stack = (char*)newsp;
+    thread->stacksize = newsize;
 #endif // endif support for Clang ASAN API
 #endif // endif has_feature
 #endif
