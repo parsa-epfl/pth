@@ -168,7 +168,7 @@ intern void wrapper_start_fiber_switch(const void *new_stack, const size_t new_s
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
     pth_debug3("WRAPPER: Switching fiber to new stack 0x%p, size %u",new_stack,new_stacksize);
-    __sanitizer_start_switch_fiber(NULL,new_stack,new_stacksize);
+    __sanitizer_start_switch_fiber(&fake_stack_save,new_stack,new_stacksize);
 #endif // endif support for Clang ASAN API
 #endif // endif has_feature
 #endif
@@ -179,7 +179,7 @@ intern void wrapper_finish_fiber_switch(void) {
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
     pth_debug3("WRAPPER: Finished fiber switch FROM stack 0x%p, size %u",from_stack,from_stacksize);
-    __sanitizer_finish_switch_fiber(NULL,&from_stack,&from_stacksize);
+    __sanitizer_finish_switch_fiber(fake_stack_save,&from_stack,&from_stacksize);
 #endif // endif support for Clang ASAN API
 #endif // endif has_feature
 #endif

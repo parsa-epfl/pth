@@ -165,6 +165,21 @@ intern void *pth_scheduler(void *dummy)
 
     pth_debug5("Finished switch to pth_scheduler first time 0x%p, size %u, FROM stack 0x%p, size %u",pth_sched->stack,pth_sched->stacksize,from_stack,from_stacksize);
 
+    /* Msutherl:
+     * The first time this runs, set the main thread's stack pointer based on what ASAN returned. Only useful
+     *   if annotation is required.
+     * - This means that in future whenever a NORETURN is generated, ASAN will not complain from the main thread.
+     */
+#if defined(__clang__)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    pth_main->stack = (char*)from_stack;
+    pth_main->stacksize = from_stacksize;
+    pth_main->stackloan = 1; // so we dont try to free a hw stack
+#endif // endif support for Clang ASAN API
+#endif // endif has_feature
+#endif
+
     /*
      * bootstrapping
      */

@@ -3096,9 +3096,9 @@ fi; echo "$as_me:$LINENO: checking for compilation debug mode" >&5
 echo $ECHO_N "checking for compilation debug mode... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: $msg" >&5
 echo "${ECHO_T}$msg" >&6
-if test ".$msg" = .enabled; then
-    enable_shared=no
-fi
+#if test ".$msg" = .enabled; then
+    #enable_shared=no
+#fi
 
 echo "$as_me:$LINENO: checking for compilation profile mode" >&5
 echo $ECHO_N "checking for compilation profile mode... $ECHO_C" >&6
