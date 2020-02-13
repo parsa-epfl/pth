@@ -5,4 +5,4 @@
 ./configure --with-pic --enable-shared --disable-static --prefix=$HOME
 make -j
 make test
-#make install
+make install
