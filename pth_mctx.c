@@ -106,9 +106,9 @@ struct pth_mctx_st {
 
 /* Msutherl: Parameters to swap out when compiled using address sanitizer 
  * These params are only used when --enable-asan requested from autoconf. */
-void *fake_stack_save;
-const void *from_stack;
-size_t from_stacksize;
+extern void *fake_stack_save;
+extern const void *from_stack;
+extern size_t from_stacksize;
 
 /* Functions that wrap __sanitizer_start_fiber_switch as well as __sanitizer_end_fiber_switch,
  * as well as debugging prints if compiled in
